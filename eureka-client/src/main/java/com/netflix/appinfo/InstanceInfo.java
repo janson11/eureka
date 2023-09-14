@@ -49,6 +49,8 @@ import org.slf4j.LoggerFactory;
  * serialized as specified by the <code>@Serializer</code>.
  * </p>
  *
+ * 应用实例信息
+ *
  * @author Karthik Ranganathan, Greg Kim
  */
 @ProvidedBy(EurekaConfigBasedInstanceInfoProvider.class)
@@ -89,19 +91,35 @@ public class InstanceInfo {
     public static final int DEFAULT_COUNTRY_ID = 1; // US
 
     // The (fixed) instanceId for this instanceInfo. This should be unique within the scope of the appName.
+    /**
+     * 对象编号
+     */
     private volatile String instanceId;
-
+    /**
+     * 应用名
+     */
     private volatile String appName;
+    /**
+     * 应用分组
+     */
     @Auto
     private volatile String appGroupName;
-
+    /**
+     * IP 地址
+     */
     private volatile String ipAddr;
 
     private static final String SID_DEFAULT = "na";
     @Deprecated
     private volatile String sid = SID_DEFAULT;
 
+    /**
+     * 应用 http 端口
+     */
     private volatile int port = DEFAULT_PORT;
+    /**
+     * 应用 https 端口
+     */
     private volatile int securePort = DEFAULT_SECURE_PORT;
 
     @Auto
@@ -132,17 +150,35 @@ public class InstanceInfo {
     private String healthCheckExplicitUrl;
     @Deprecated
     private volatile int countryId = DEFAULT_COUNTRY_ID; // Defaults to US
+    /**
+     * 应用 https 端口是否开启
+     */
     private volatile boolean isSecurePortEnabled = false;
+    /**
+     * 应用 http 端口是否开启
+     */
     private volatile boolean isUnsecurePortEnabled = true;
+    /**
+     * 数据中心信息
+     */
     private volatile DataCenterInfo dataCenterInfo;
+    /**
+     * 主机名
+     */
     private volatile String hostName;
     private volatile InstanceStatus status = InstanceStatus.UP;
     private volatile InstanceStatus overriddenStatus = InstanceStatus.UNKNOWN;
     @XStreamOmitField
     private volatile boolean isInstanceInfoDirty = false;
+    /**
+     * 租约信息
+     */
     private volatile LeaseInfo leaseInfo;
     @Auto
     private volatile Boolean isCoordinatingDiscoveryServer = Boolean.FALSE;
+    /**
+     * 元数据( Metadata )集合
+     */
     @XStreamAlias("metadata")
     private volatile Map<String, String> metadata;
     @Auto
@@ -337,12 +373,14 @@ public class InstanceInfo {
 
     @Override
     public int hashCode() {
+        // 只使用ID计算hashcode
         String id = getId();
         return (id == null) ? 31 : (id.hashCode() + 31);
     }
 
     @Override
     public boolean equals(Object obj) {
+        // 只对比ID
         if (this == obj) {
             return true;
         }
@@ -1169,6 +1207,7 @@ public class InstanceInfo {
         if (this.status != status) {
             InstanceStatus prev = this.status;
             this.status = status;
+            // 设置 应用实例信息 数据一致
             setIsDirty();
             return prev;
         }
@@ -1338,10 +1377,21 @@ public class InstanceInfo {
     public String getVersion() {
         return version;
     }
-
+    /**
+     * 操作类型
+     */
     public enum ActionType {
+        /**
+         * 添加
+         */
         ADDED, // Added in the discovery server
+        /**
+         * 更新
+         */
         MODIFIED, // Changed in the discovery server
+        /**
+         * 删除
+         */
         DELETED
         // Deleted from the discovery server
     }

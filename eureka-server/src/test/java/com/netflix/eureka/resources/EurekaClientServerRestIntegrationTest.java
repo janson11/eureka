@@ -210,13 +210,15 @@ public class EurekaClientServerRestIntegrationTest {
      * This will be read by server internal discovery client. We need to salience it.
      */
     private static void injectEurekaConfiguration() throws UnknownHostException {
-        String myHostName = InetAddress.getLocalHost().getHostName();
-        String myServiceUrl = "http://" + myHostName + ":8080/v2/";
+//        String myHostName = InetAddress.getLocalHost().getHostName();
+        String myHostName = "localhost";
+
+        String myServiceUrl = "http://" + myHostName + ":8761/v2/";
 
         System.setProperty("eureka.region", "default");
         System.setProperty("eureka.name", "eureka");
         System.setProperty("eureka.vipAddress", "eureka.mydomain.net");
-        System.setProperty("eureka.port", "8080");
+        System.setProperty("eureka.port", "8761");
         System.setProperty("eureka.preferSameZone", "false");
         System.setProperty("eureka.shouldUseDns", "false");
         System.setProperty("eureka.shouldFetchRegistry", "false");
@@ -234,7 +236,7 @@ public class EurekaClientServerRestIntegrationTest {
     private static void startServer() throws Exception {
         File warFile = findWar();
 
-        server = new Server(8080);
+        server = new Server(8761);
 
         WebAppContext webapp = new WebAppContext();
         webapp.setContextPath("/");
@@ -243,7 +245,7 @@ public class EurekaClientServerRestIntegrationTest {
 
         server.start();
 
-        eurekaServiceUrl = "http://localhost:8080/v2";
+        eurekaServiceUrl = "http://localhost:8761/v2";
     }
 
     private static File findWar() {

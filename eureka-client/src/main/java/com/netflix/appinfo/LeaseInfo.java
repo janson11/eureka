@@ -30,6 +30,8 @@ import com.thoughtworks.xstream.annotations.XStreamOmitField;
  * {@link EurekaInstanceConfig#getLeaseExpirationDurationInSeconds()} which is
  * held in this lease. The lease also tracks the last time it was renewed.
  * </p>
+ * 租约信息
+ *
  *
  * @author Karthik Ranganathan, Greg Kim
  *
@@ -41,7 +43,13 @@ public class LeaseInfo {
     public static final int DEFAULT_LEASE_DURATION = 90;
 
     // Client settings
+    /**
+     * 租约续约频率，单位：秒。
+     */
     private int renewalIntervalInSecs = DEFAULT_LEASE_RENEWAL_INTERVAL;
+    /**
+     * 契约过期时间，单位：秒
+     */
     private int durationInSecs = DEFAULT_LEASE_DURATION;
 
     // Server populated

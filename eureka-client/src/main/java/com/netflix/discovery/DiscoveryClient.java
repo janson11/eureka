@@ -138,27 +138,55 @@ public class DiscoveryClient implements EurekaClient {
 
     // instance variables
     /**
-     * A scheduler to be used for the following 3 tasks:
+     * 线程池
+     *
+     * A scheduler to be used for the following 3 tasks:【目前只有两个】
      * - updating service urls
      * - scheduling a TimedSuperVisorTask
      */
     private final ScheduledExecutorService scheduler;
     // additional executors for supervised subtasks
+    /**
+     * 心跳执行器
+     */
     private final ThreadPoolExecutor heartbeatExecutor;
+    /**
+     * {@link #localRegionApps} 刷新执行器
+     */
     private final ThreadPoolExecutor cacheRefreshExecutor;
-
+    /**
+     * 缓存刷新任务
+     */
     private TimedSupervisorTask cacheRefreshTask;
+    /**
+     * 心跳任务
+     */
     private TimedSupervisorTask heartbeatTask;
-
+    /**
+     * 生成健康检查回调的工厂
+     */
     private final Provider<HealthCheckHandler> healthCheckHandlerProvider;
+    /**
+     * 生成健康检查处理器的工厂
+     */
     private final Provider<HealthCheckCallback> healthCheckCallbackProvider;
+    /**
+     * 向 Eureka-Server 注册之前的处理器
+     */
     private final PreRegistrationHandler preRegistrationHandler;
+    /**
+     * Applications 在本地的缓存
+     */
     private final AtomicReference<Applications> localRegionApps = new AtomicReference<>();
     private final Lock fetchRegistryUpdateLock = new ReentrantLock();
+    // 拉取注册信息次数
     // monotonically increasing generation counter to ensure stale threads do not reset registry to an older version
     private final AtomicLong fetchRegistryGeneration;
     private final ApplicationInfoManager applicationInfoManager;
     private final InstanceInfo instanceInfo;
+    /**sync
+     * 获取哪些区域( Region )集合的注册信息
+     */
     private final AtomicReference<String> remoteRegionsToFetch;
     private final AtomicReference<String[]> remoteRegionsRef;
     private final InstanceRegionChecker instanceRegionChecker;
@@ -171,24 +199,52 @@ public class DiscoveryClient implements EurekaClient {
     private final AtomicReference<HealthCheckHandler> healthCheckHandlerRef = new AtomicReference<>();
     private volatile Map<String, Applications> remoteRegionVsApps = new ConcurrentHashMap<>();
     private volatile InstanceInfo.InstanceStatus lastRemoteInstanceStatus = InstanceInfo.InstanceStatus.UNKNOWN;
+    /**
+     * Eureka 事件监听器
+     */
     private final CopyOnWriteArraySet<EurekaEventListener> eventListeners = new CopyOnWriteArraySet<>();
 
+    /**
+     * 应用路径 + 对象编号 拼接
+     * 无实际业务用途，用于打 logger
+     */
     private String appPathIdentifier;
+    /**
+     * 应用实例状态变更监听器
+     */
     private ApplicationInfoManager.StatusChangeListener statusChangeListener;
-
+    /**
+     * 应用实例信息复制器
+     */
     private InstanceInfoReplicator instanceInfoReplicator;
-
+    /**
+     * 注册信息的应用实例数
+     */
     private volatile int registrySize = 0;
+    /**
+     * 最后成功从 Eureka-Server 拉取注册信息时间戳
+     */
     private volatile long lastSuccessfulRegistryFetchTimestamp = -1;
+    /**
+     * 最后成功向 Eureka-Server 心跳时间戳
+     */
     private volatile long lastSuccessfulHeartbeatTimestamp = -1;
+    /**
+     * 心跳监控
+     */
     private final ThresholdLevelsMetric heartbeatStalenessMonitor;
+    /**
+     * 拉取监控
+     */
     private final ThresholdLevelsMetric registryStalenessMonitor;
 
     private final AtomicBoolean isShutdown = new AtomicBoolean(false);
 
     protected final EurekaClientConfig clientConfig;
     protected final EurekaTransportConfig transportConfig;
-
+    /**
+     * 初始化完成时间戳
+     */
     private final long initTimestampMs;
     private final int initRegistrySize;
 
@@ -323,6 +379,7 @@ public class DiscoveryClient implements EurekaClient {
     @Inject
     DiscoveryClient(ApplicationInfoManager applicationInfoManager, EurekaClientConfig config, AbstractDiscoveryClientOptionalArgs args,
                     Provider<BackupRegistry> backupRegistryProvider, EndpointRandomizer endpointRandomizer) {
+        // 【3.2.1】赋值 AbstractDiscoveryClientOptionalArgs
         if (args != null) {
             this.healthCheckHandlerProvider = args.healthCheckHandlerProvider;
             this.healthCheckCallbackProvider = args.healthCheckCallbackProvider;
@@ -333,7 +390,8 @@ public class DiscoveryClient implements EurekaClient {
             this.healthCheckHandlerProvider = null;
             this.preRegistrationHandler = null;
         }
-        
+
+        // 【3.2.2】赋值 ApplicationInfoManager、EurekaClientConfig
         this.applicationInfoManager = applicationInfoManager;
         InstanceInfo myInfo = applicationInfoManager.getInfo();
 
@@ -347,16 +405,22 @@ public class DiscoveryClient implements EurekaClient {
             logger.warn("Setting instanceInfo to a passed in null value");
         }
 
+        // 【3.2.3】赋值 BackupRegistry
         this.backupRegistryProvider = backupRegistryProvider;
+
         this.endpointRandomizer = endpointRandomizer;
+        // 【3.2.4】初始化 InstanceInfoBasedUrlRandomizer TODO 什么用途
         this.urlRandomizer = new EndpointUtils.InstanceInfoBasedUrlRandomizer(instanceInfo);
+        // 【3.2.5】初始化应用集合在本地的缓存
         localRegionApps.set(new Applications());
 
         fetchRegistryGeneration = new AtomicLong(0);
 
+        // 【3.2.6】获取哪些 Region 集合的注册信息
         remoteRegionsToFetch = new AtomicReference<String>(clientConfig.fetchRegistryForRemoteRegions());
         remoteRegionsRef = new AtomicReference<>(remoteRegionsToFetch.get() == null ? null : remoteRegionsToFetch.get().split(","));
 
+        // 【3.2.7】初始化拉取、心跳的监控
         if (config.shouldFetchRegistry()) {
             this.registryStalenessMonitor = new ThresholdLevelsMetric(this, METRIC_REGISTRY_PREFIX + "lastUpdateSec_", new long[]{15L, 30L, 60L, 120L, 240L, 480L});
         } else {
@@ -371,6 +435,7 @@ public class DiscoveryClient implements EurekaClient {
 
         logger.info("Initializing Eureka in region {}", clientConfig.getRegion());
 
+        // 【3.2.8】结束初始化，当无需和 Eureka-Server 交互
         if (!config.shouldRegisterWithEureka() && !config.shouldFetchRegistry()) {
             logger.info("Client configured to neither register nor query for data.");
             scheduler = null;
