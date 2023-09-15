@@ -44,6 +44,8 @@ public interface EurekaServerConfig {
      * <em>Elastic IP Biding</em>. The access id should be provided with
      * appropriate AWS permissions to bind the EIP.
      *
+     * 跳过：AWS 使用
+     *
      * @return
      */
     String getAWSAccessId();
@@ -52,6 +54,8 @@ public interface EurekaServerConfig {
      * Gets the <em>AWS Secret Key</em>. This is primarily used for
      * <em>Elastic IP Biding</em>. The access id should be provided with
      * appropriate AWS permissions to bind the EIP.
+     *
+     * 跳过：AWS 使用
      *
      * @return
      */
@@ -65,6 +69,8 @@ public interface EurekaServerConfig {
      * <em>The changes are effective at runtime.</em>
      * </p>
      *
+     * 跳过：AWS 使用
+     *
      * @return the number of times the server should try to bind to the
      *         candidate EIP.
      */
@@ -77,6 +83,8 @@ public interface EurekaServerConfig {
      * <p>
      * <em>The changes are effective at runtime.</em>
      * </p>
+     *
+     * 跳过：AWS 使用
      *
      * @return the time in milliseconds.
      */
@@ -104,6 +112,13 @@ public interface EurekaServerConfig {
      * {@link #getRenewalPercentThreshold()}, the server turns off expirations
      * to avert danger.This will help the server in maintaining the registry
      * information in case of network problems between client and the server.
+     *
+     * 是否开启自我保护模式。
+     * FROM 周立——《理解Eureka的自我保护模式》
+     * 当Eureka Server节点在短时间内丢失过多客户端时（可能发生了网络分区故障），那么这个节点就会进入自我保护模式。
+     * 一旦进入该模式，Eureka Server就会保护服务注册表中的信息，不再删除服务注册表中的数据（也就是不会注销任何微服务）。
+     * 当网络故障恢复后，该Eureka Server节点会自动退出自我保护模式。
+     *
      * <p>
      * <em>The changes are effective at runtime.</em>
      * </p>
@@ -122,6 +137,8 @@ public interface EurekaServerConfig {
      * <em>The changes are effective at runtime.</em>
      * </p>
      *
+     * 开启自我保护模式比例，超过该比例后开启自我保护模式,默认0.85
+     *
      * @return value between 0 and 1 indicating the percentage. For example,
      *         <code>85%</code> will be specified as <code>0.85</code>.
      */
@@ -132,6 +149,9 @@ public interface EurekaServerConfig {
      * {@link #getRenewalPercentThreshold()} needs to be updated.
      *
      * @return time in milliseconds indicating the interval.
+     *
+     * 自我保护模式比例更新频率，单位：毫秒。15 * 60 * 1000 默认15min
+     *
      */
     int getRenewalThresholdUpdateIntervalMs();
 
@@ -142,6 +162,9 @@ public interface EurekaServerConfig {
      * expected.
      *
      * @return time in seconds indicating the expected interval
+     *
+     * 期望Eureka-Client更新频率，单位：毫秒。
+     *
      */
     int getExpectedClientRenewalIntervalSeconds();
 
@@ -155,12 +178,17 @@ public interface EurekaServerConfig {
      * </p>
      *
      * @return timer in milliseconds indicating the interval.
+     *
+     * Eureka-Server 集群节点更新频率，单位：毫秒。
+     *
      */
     int getPeerEurekaNodesUpdateIntervalMs();
 
     /**
      * If set to true, the replicated data send in the request will be always compressed.
      * This does not define response path, which is driven by "Accept-Encoding" header.
+     *
+     * 是否开启 Eureka-Server 集群间请求压缩
      */
     boolean shouldEnableReplicatedRequestCompression();
 
@@ -195,6 +223,7 @@ public interface EurekaServerConfig {
      * When the instance registry starts up empty, it builds over time when the
      * clients start to send heartbeats and the server requests the clients for
      * registration information.
+     * Eureka-Server 启动时，从远程 Eureka-Server 读取不到注册信息时，多长时间不允许 Eureka-Client 访问
      *
      * @return time in milliseconds.
      */
