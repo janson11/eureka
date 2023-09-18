@@ -18,6 +18,9 @@ import com.netflix.servo.monitor.MonitorConfig;
 
 /**
  * An auth filter for client requests. For now, it only logs supported client identification data from header info
+ *
+ * Eureka-Server 请求认证过滤器
+ *
  */
 @Singleton
 public class ServerRequestAuthFilter implements Filter {
