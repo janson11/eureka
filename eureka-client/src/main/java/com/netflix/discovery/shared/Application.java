@@ -49,6 +49,10 @@ import com.thoughtworks.xstream.annotations.XStreamOmitField;
  *
  * @author Karthik Ranganathan
  *
+ * 应用
+ *
+ * 一个应用下，可以有多个应用实例对象
+ *
  */
 @Serializer("com.netflix.discovery.converters.EntityBodyConverter")
 @XStreamAlias("application")
@@ -64,16 +68,29 @@ public class Application {
                 + shuffledInstances + ", instancesMap=" + instancesMap + "]";
     }
 
+    /**
+     * 应用名
+     */
     private String name;
 
     @XStreamOmitField
     private volatile boolean isDirty = false;
 
+    /**
+     * 应用实例集合
+     */
     @XStreamImplicit
     private final Set<InstanceInfo> instances;
 
+    /**
+     * 打乱的应用实例集合{@link #instances}
+     */
     private final AtomicReference<List<InstanceInfo>> shuffledInstances;
 
+    /**
+     * 应用实例映射
+     * key：应用实例编号 {@link InstanceInfo#instanceId}
+     */
     private final Map<String, InstanceInfo> instancesMap;
 
     public Application() {
@@ -104,10 +121,14 @@ public class Application {
      *            the instance info object to be added.
      */
     public void addInstance(InstanceInfo i) {
+        // 添加到 应用实例映射
         instancesMap.put(i.getId(), i);
         synchronized (instances) {
+            // 移除原有实例
             instances.remove(i);
+            // 添加新实例
             instances.add(i);
+            // 设置 isDirty ，目前只用于 `#toString()` 方法打印，无业务逻辑
             isDirty = true;
         }
     }
@@ -253,10 +274,13 @@ public class Application {
     }
 
     private void removeInstance(InstanceInfo i, boolean markAsDirty) {
+        // 移除 应用实例映射
         instancesMap.remove(i.getId());
         synchronized (instances) {
+            // 移除 应用实例
             instances.remove(i);
             if (markAsDirty) {
+                // 设置 isDirty ，目前只用于 `#toString()` 方法打印，无业务逻辑
                 isDirty = true;
             }
         }

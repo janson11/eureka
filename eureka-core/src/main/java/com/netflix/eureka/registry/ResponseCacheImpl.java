@@ -173,7 +173,7 @@ public class ResponseCacheImpl implements ResponseCache {
             @Override
             public void run() {
                 logger.debug("Updating the client cache from response cache");
-                for (Key key : readOnlyCacheMap.keySet()) {
+                for (Key key : readOnlyCacheMap.keySet()) {// 循环 readOnlyCacheMap 的缓存键
                     if (logger.isDebugEnabled()) {
                         logger.debug("Updating the client cache from response cache for key : {} {} {} {}",
                                 key.getEntityType(), key.getName(), key.getVersion(), key.getType());
@@ -182,7 +182,7 @@ public class ResponseCacheImpl implements ResponseCache {
                         CurrentRequestVersion.set(key.getVersion());
                         Value cacheValue = readWriteCacheMap.get(key);
                         Value currentCacheValue = readOnlyCacheMap.get(key);
-                        if (cacheValue != currentCacheValue) {
+                        if (cacheValue != currentCacheValue) {// 不一致时，进行替换
                             readOnlyCacheMap.put(key, cacheValue);
                         }
                     } catch (Throwable th) {
@@ -280,8 +280,9 @@ public class ResponseCacheImpl implements ResponseCache {
         for (Key key : keys) {
             logger.debug("Invalidating the response cache key : {} {} {} {}, {}",
                     key.getEntityType(), key.getName(), key.getVersion(), key.getType(), key.getEurekaAccept());
-
+            // 过期读写缓存
             readWriteCacheMap.invalidate(key);
+            // TODO[0009]：RemoteRegionRegistry
             Collection<Key> keysWithRegions = regionSpecificKeys.get(key);
             if (null != keysWithRegions && !keysWithRegions.isEmpty()) {
                 for (Key keysWithRegion : keysWithRegions) {
@@ -396,9 +397,10 @@ public class ResponseCacheImpl implements ResponseCache {
         if (app == null) {
             return EMPTY_PAYLOAD;
         }
-
+        // 获得编码器
         EncoderWrapper encoderWrapper = serverCodecs.getEncoder(key.getType(), key.getEurekaAccept());
         try {
+            // 编码
             return encoderWrapper.encode(app);
         } catch (Exception e) {
             logger.error("Failed to encode the payload for application {}", app.getName(), e);
@@ -506,7 +508,13 @@ public class ResponseCacheImpl implements ResponseCache {
      *
      */
     public class Value {
+        /**
+         * 原始值
+         */
         private final String payload;
+        /**
+         * GZIP 压缩后的值
+         */
         private byte[] gzipped;
 
         public Value(String payload) {
