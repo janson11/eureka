@@ -121,6 +121,9 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
     protected final EurekaClient eurekaClient;
     protected volatile PeerEurekaNodes peerEurekaNodes;
 
+    /**
+     * 应用实例状态覆盖规则
+     */
     private final InstanceStatusOverrideRule instanceStatusOverrideRule;
 
     private Timer timer = new Timer(
@@ -211,6 +214,7 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
         int count = 0;
 
         for (int i = 0; ((i < serverConfig.getRegistrySyncRetries()) && (count == 0)); i++) {
+            // 未读取到注册信息，sleep 等待
             if (i > 0) {
                 try {
                     Thread.sleep(serverConfig.getRegistrySyncRetryWaitMs());
@@ -219,11 +223,12 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
                     break;
                 }
             }
+            // 获取注册信息
             Applications apps = eurekaClient.getApplications();
             for (Application app : apps.getRegisteredApplications()) {
                 for (InstanceInfo instance : app.getInstances()) {
                     try {
-                        if (isRegisterable(instance)) {
+                        if (isRegisterable(instance)) {// 判断是否能够注册
                             register(instance, instance.getLeaseInfo().getDurationInSecs(), true);
                             count++;
                         }
@@ -339,6 +344,7 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
     @Override
     public boolean shouldAllowAccess(boolean remoteRegionRequired) {
         if (this.peerInstancesTransferEmptyOnStartup) {
+            // 设置启动时间
             if (!(System.currentTimeMillis() > this.startupTime + serverConfig.getWaitTimeInMsWhenSyncEmpty())) {
                 return false;
             }
@@ -646,6 +652,7 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
             if (isReplication) {
                 numberOfReplicationsLastMin.increment();
             }
+            // Eureka-Server 发起的请求 或者集群为空
             // If it is a replication already, do not replicate again as this will create a poison replication
             if (peerEurekaNodes == Collections.EMPTY_LIST || isReplication) {
                 return;

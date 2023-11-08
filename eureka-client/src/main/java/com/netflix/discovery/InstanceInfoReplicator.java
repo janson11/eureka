@@ -111,7 +111,7 @@ class InstanceInfoReplicator implements Runnable {
     }
 
     public boolean onDemandUpdate() {
-        if (rateLimiter.acquire(burstSize, allowedRatePerMinute)) {
+        if (rateLimiter.acquire(burstSize, allowedRatePerMinute)) { // 限流
             if (!scheduler.isShutdown()) {
                 scheduler.submit(new Runnable() {
                     @Override

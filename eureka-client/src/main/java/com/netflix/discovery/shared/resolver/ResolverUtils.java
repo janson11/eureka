@@ -85,6 +85,7 @@ public final class ResolverUtils {
      * @return a copy of the original list with elements in the random order
      */
     public static <T extends EurekaEndpoint> List<T> randomize(List<T> list) {
+        // 数组大小为 0 或者 1 ，不进行打乱
         List<T> randomList = new ArrayList<>(list);
         if (randomList.size() < 2) {
             return randomList;

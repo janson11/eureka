@@ -55,6 +55,8 @@ import javax.net.ssl.SSLContext;
 import static com.netflix.discovery.util.DiscoveryBuildInfo.buildVersion;
 
 /**
+ * 创建 {@link JerseyApplicationClient} 的工厂
+ *
  * @author Tomasz Bak
  */
 public class JerseyEurekaHttpClientFactory implements TransportClientFactory {
@@ -137,15 +139,16 @@ public class JerseyEurekaHttpClientFactory implements TransportClientFactory {
         boolean useExperimental = "true".equals(clientConfig.getExperimental("JerseyEurekaHttpClientFactory.useNewBuilder"));
 
         JerseyEurekaHttpClientFactoryBuilder clientBuilder = (useExperimental ? experimentalBuilder() : newBuilder())
-                .withAdditionalFilters(additionalFilters)
-                .withMyInstanceInfo(myInstanceInfo)
-                .withUserAgent("Java-EurekaClient")
+                .withAdditionalFilters(additionalFilters)// 客户端附加过滤器
+                .withMyInstanceInfo(myInstanceInfo) // 应用实例
+                .withUserAgent("Java-EurekaClient") // UA
                 .withClientConfig(clientConfig)
                 .withClientIdentity(clientIdentity);
         
         sslContext.ifPresent(clientBuilder::withSSLContext);
         hostnameVerifier.ifPresent(clientBuilder::withHostnameVerifier);
 
+        // 设置 Client Name
         if ("true".equals(System.getProperty("com.netflix.eureka.shouldSSLConnectionsUseSystemSocketFactory"))) {
             clientBuilder.withClientName("DiscoveryClient-HTTPClient-System").withSystemSSLConfiguration();
         } else if (clientConfig.getProxyHost() != null && clientConfig.getProxyPort() != null) {
@@ -153,7 +156,7 @@ public class JerseyEurekaHttpClientFactory implements TransportClientFactory {
                     .withProxy(
                             clientConfig.getProxyHost(), Integer.parseInt(clientConfig.getProxyPort()),
                             clientConfig.getProxyUserName(), clientConfig.getProxyPassword()
-                    );
+                    );// http proxy
         } else {
             clientBuilder.withClientName("DiscoveryClient-HTTPClient");
         }

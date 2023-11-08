@@ -326,6 +326,7 @@ class TaskExecutors<ID, T> {
                             case PermanentError:
                                 logger.warn("Discarding a task of {} due to permanent error", workerName);
                         }
+                        // TODO 芋艿：监控相关，暂时无视
                         metrics.registerTaskResult(result, 1);
                     }
                 }

@@ -310,15 +310,16 @@ class AcceptorExecutor<ID, T> {
             while (!reprocessQueue.isEmpty() && !isFull()) {
                 TaskHolder<ID, T> taskHolder = reprocessQueue.pollLast();
                 ID id = taskHolder.getId();
-                if (taskHolder.getExpiryTime() <= now) {
+                if (taskHolder.getExpiryTime() <= now) {// 过期
                     expiredTasks++;
-                } else if (pendingTasks.containsKey(id)) {
+                } else if (pendingTasks.containsKey(id)) {// 已存在
                     overriddenTasks++;
                 } else {
                     pendingTasks.put(id, taskHolder);
-                    processingOrder.addFirst(id);
+                    processingOrder.addFirst(id);// 提交到队头
                 }
             }
+            // 如果待执行队列已满，清空重新执行队列，放弃较早的任务
             if (isFull()) {
                 queueOverflows += reprocessQueue.size();
                 reprocessQueue.clear();

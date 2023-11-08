@@ -67,10 +67,13 @@ public class MetricsCollectingEurekaHttpClient extends EurekaHttpClientDecorator
 
     @Override
     protected <R> EurekaHttpResponse<R> execute(RequestExecutor<R> requestExecutor) {
+        // 获得 请求类型 的 请求指标
         EurekaHttpClientRequestMetrics requestMetrics = metricsByRequestType.get(requestExecutor.getRequestType());
         Stopwatch stopwatch = requestMetrics.latencyTimer.start();
         try {
+            // 执行请求
             EurekaHttpResponse<R> httpResponse = requestExecutor.execute(delegate);
+            // 增加 请求指标
             requestMetrics.countersByStatus.get(mappedStatus(httpResponse)).increment();
             return httpResponse;
         } catch (Exception e) {

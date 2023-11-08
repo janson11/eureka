@@ -79,11 +79,29 @@ public class DnsTxtRecordClusterResolver implements ClusterResolver<AwsEndpoint>
 
     private static final Logger logger = LoggerFactory.getLogger(DnsTxtRecordClusterResolver.class);
 
+    /**
+     * 地区
+     */
     private final String region;
+    /**
+     * 集群根地址，例如 eureka.iocoder.cn
+     */
     private final String rootClusterDNS;
+    /**
+     * 是否解析可用区( zone )
+     */
     private final boolean extractZoneFromDNS;
+    /**
+     * 端口
+     */
     private final int port;
+    /**
+     * 是否安全
+     */
     private final boolean isSecure;
+    /**
+     * 相对地址
+     */
     private final String relativeUri;
 
     /**
@@ -117,10 +135,12 @@ public class DnsTxtRecordClusterResolver implements ClusterResolver<AwsEndpoint>
 
     private static List<AwsEndpoint> resolve(String region, String rootClusterDNS, boolean extractZone, int port, boolean isSecure, String relativeUri) {
         try {
+            // 解析 第一层 DNS 记录
             Set<String> zoneDomainNames = resolve(rootClusterDNS);
             if (zoneDomainNames.isEmpty()) {
                 throw new ClusterResolverException("Cannot resolve Eureka cluster addresses; there are no data in TXT record for DN " + rootClusterDNS);
             }
+            // 记录 第二层 DNS 记录
             List<AwsEndpoint> endpoints = new ArrayList<>();
             for (String zoneDomain : zoneDomainNames) {
                 String zone = extractZone ? ResolverUtils.extractZoneFromHostName(zoneDomain) : null;

@@ -19,6 +19,8 @@ import org.slf4j.LoggerFactory;
 import static com.netflix.eureka.cluster.protocol.ReplicationInstance.ReplicationInstanceBuilder.aReplicationInstance;
 
 /**
+ * 同步操作任务处理器
+ *
  * @author Tomasz Bak
  */
 class ReplicationTaskProcessor implements TaskProcessor<ReplicationTask> {
@@ -75,9 +77,12 @@ class ReplicationTaskProcessor implements TaskProcessor<ReplicationTask> {
 
     @Override
     public ProcessingResult process(List<ReplicationTask> tasks) {
+        // 创建 批量提交同步操作任务的请求对象
         ReplicationList list = createReplicationListOf(tasks);
         try {
+            // 发起 批量提交同步操作任务的请求
             EurekaHttpResponse<ReplicationListResponse> response = replicationClient.submitBatchUpdates(list);
+            // 处理 批量提交同步操作任务的响应
             int statusCode = response.getStatusCode();
             if (!isSuccess(statusCode)) {
                 if (statusCode == 503) {
@@ -139,12 +144,14 @@ class ReplicationTaskProcessor implements TaskProcessor<ReplicationTask> {
     }
 
     private void handleBatchResponse(ReplicationTask task, ReplicationInstanceResponse response) {
+        // 执行成功
         int statusCode = response.getStatusCode();
         if (isSuccess(statusCode)) {
             task.handleSuccess();
             return;
         }
 
+        // 执行失败
         try {
             task.handleFailure(response.getStatusCode(), response.getResponseEntity());
         } catch (Throwable e) {
